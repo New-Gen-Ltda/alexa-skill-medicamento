@@ -6,11 +6,15 @@
 # This sample is built using the handler classes approach in skill builder.
 import logging 
 import ask_sdk_core.utils as ask_utils
+import os
+from ask_sdk_s3.adapter import S3Adapter
+s3_adapter = S3Adapter(bucket_name=os.environ["S3_PERSISTENCE_BUCKET"])
 
-from ask_sdk_core.skill_builder import SkillBuilder
+from ask_sdk_core.skill_builder import CustomSkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.dispatch_components import AbstractExceptionHandler
 from ask_sdk_core.handler_input import HandlerInput
+
 
 from ask_sdk_model import Response
 
@@ -27,8 +31,8 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speak_output = ("Olá, como vai? Bem vindo ao programa que irá ajudar você a controlar seus remédios!")
-        ask = ("Deseja cadastrar seus medicamentos agora?")
+        speak_output = ("Olá, como vai? Bem vindo ao programa que irá ajudar você a controlar seus remédios! deseja abrir o menu? Caso contrário informe o comando desejado.")
+        ask = ("Huuummm não entendi")
         
 
         return (
@@ -37,8 +41,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
                 .ask(ask)
                 .response
         )
-
-
+    
 class HelloWorldIntentHandler(AbstractRequestHandler):
     """Handler for Hello World Intent."""
     def can_handle(self, handler_input):
@@ -56,49 +59,43 @@ class HelloWorldIntentHandler(AbstractRequestHandler):
                 .response
         )
 
-# const RegisterBirthdayIntentHandler = {
-#     canHandle(handlerInput) {
-#         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
-#             && Alexa.getIntentName(handlerInput.requestEnvelope) === 'RegisterBirthdayIntent';
-#     },
-#     handle(handlerInput) {
-#         const {requestEnvelope, responseBuilder} = handlerInput;
-#         const {intent} = requestEnvelope.request;
+class ListaMedicamentosIntentHandler(AbstractRequestHandler):
+    """Handler for Hello World Intent."""
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("AbrirListaMedicamentosIntent")(handler_input)
 
-#         let speechText = handlerInput.t('REJECTED_MSG');
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        #slots = handler_input.request_envelope.request.intent.slots
+        #nomeRemedio = slots["nomeRemedio"].value
+        speak_output = _("Os medicamentos cadastrados são: {nomeRemedio} ")
 
-#         if (intent.confirmationStatus === 'CONFIRMED') {
-#             const day = Alexa.getSlotValue(requestEnvelope, 'day');
-#             const year = Alexa.getSlotValue(requestEnvelope, 'year');
-#             const month = Alexa.getSlotValue(requestEnvelope, 'month');
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .response
+        )
+    
+class AtualizarMedicamentosIntentHandler(AbstractRequestHandler):
+    """Handler for Hello World Intent."""
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("AbrirListaMedicamentosIntent")(handler_input)
 
-#             speechText = handlerInput.t('REGISTER_MSG', {day: day, month: month, year: year}); // we'll save these values in the next module
-#         } else {
-#             const repromptText = handlerInput.t('HELP_MSG');
-#             responseBuilder.reprompt(repromptText);
-#         }
-#         return responseBuilder
-#             .speak(speechText)
-#             .getResponse();
-#     }
-# };
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        #slots = handler_input.request_envelope.request.intent.slots
+        #nomeRemedio = slots["nomeRemedio"].value
+        speak_output = _("Os medicamentos cadastrados são: {nomeRemedio} ")
 
-
-    # def handle(self, handler_input):
-    #     # type: (HandlerInput) -> Response
-    #     slots = handler_input.request_envelope.request.intent.slots
-    #     year = slots["year"].value
-    #     month = slots["month"].value
-    #     day = slots["day"].value
-
-    #     speak_output = 'Thanks, I will remember that you were born {month} {day} {year}.'.format(month=month, day=day, year=year)
-
-    #     return (
-    #         handler_input.response_builder
-    #             .speak(speak_output)
-    #             # .ask("add a reprompt if you want to keep the session open for the user to respond")
-    #             .response
-    #     )
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .response
+        )
 
 class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
     """Handler for Hello World Intent."""
@@ -115,7 +112,20 @@ class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
         descRemedio = slots["descRemedio"].value
             # speak_output = 'Thanks, I will remember that you were born {month} {day} {year}.'.format(month=month, day=day, year=year)
 
+        attributes_manager = handler_input.attributes_manager
+
+        remedio_attributes = {
+            "nomeRemedio": nomeRemedio,
+            "horarioRemedio": horarioRemedio,
+            "descRemedio": descRemedio
+        }
+
+
+        attributes_manager.persistent_attributes = remedio_attributes
+        attributes_manager.save_persistent_attributes()
+
         speak_output = "O medicamento {nomeRemedio} com horário às {horarioRemedio} e descrição {descRemedio} foi cadastrado com sucesso!".format(nomeRemedio=nomeRemedio, horarioRemedio=horarioRemedio, descRemedio=descRemedio)
+
 
         return (
             handler_input.response_builder
@@ -124,7 +134,7 @@ class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
                 .response
         )
 
-
+    
 class HelpIntentHandler(AbstractRequestHandler):
     """Handler for Help Intent."""
     def can_handle(self, handler_input):
@@ -141,7 +151,6 @@ class HelpIntentHandler(AbstractRequestHandler):
                 .ask(speak_output)
                 .response
         )
-
 
 class CancelOrStopIntentHandler(AbstractRequestHandler):
     """Single handler for Cancel and Stop Intent."""
@@ -187,7 +196,6 @@ class SessionEndedRequestHandler(AbstractRequestHandler):
 
         return handler_input.response_builder.response
 
-
 class IntentReflectorHandler(AbstractRequestHandler):
     """The intent reflector is used for interaction model testing and debugging.
     It will simply repeat the intent the user said. You can create custom handlers
@@ -209,7 +217,6 @@ class IntentReflectorHandler(AbstractRequestHandler):
                 # .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
-
 
 class CatchAllExceptionHandler(AbstractExceptionHandler):
     """Generic error handling to capture any syntax or routing errors. If you receive an error
@@ -238,11 +245,14 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 # defined are included below. The order matters - they're processed top to bottom.
 
 
-sb = SkillBuilder()
+#sb = SkillBuilder()
+sb = CustomSkillBuilder(persistence_adapter=s3_adapter)
 
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(HelloWorldIntentHandler())
 sb.add_request_handler(CadastrarMedicamentoIntentHandler())
+sb.add_request_handler(ListaMedicamentosIntentHandler())
+sb.add_request_handler(AtualizarMedicamentosIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
