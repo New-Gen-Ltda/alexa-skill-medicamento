@@ -60,14 +60,6 @@
             }
           ],
           "samples": [
-            "{descRemedio} {nomeRemedio}",
-            "{descRemedio} {horarioRemedio}",
-            "{nomeRemedio} {descRemedio}",
-            "{nomeRemedio} {horarioRemedio} {descRemedio}",
-            "{nomeRemedio} {horarioRemedio}",
-            "{descRemedio}",
-            "{horarioRemedio}",
-            "{nomeRemedio}",
             "O nome é {nomeRemedio} às {horarioRemedio} com a descrição {descRemedio}",
             "A descrição do remédio é {descRemedio}",
             "O horário é {horarioRemedio}",
@@ -135,12 +127,19 @@
               "samples": [
                 "A nova descrição é {atualizarDescricao}"
               ]
+            },
+            {
+              "name": "trocaRemedio",
+              "type": "AMAZON.FirstName"
             }
           ],
           "samples": [
+            "trocar medicamento",
+            "atualizar remedio",
+            "trocar remedio",
+            "atualizar medicamento",
             "atualizar {nomeRemedio} {atualizarHorario} {atualizarDescricao}",
-            "atualizar {nomeRemedio}",
-            "Atualizar mediacamentos"
+            "atualizar {nomeRemedio}"
           ]
         }
       ],
@@ -279,6 +278,13 @@
               "prompts": {
                 "elicitation": "Elicit.Slot.361545115956.30865905132"
               }
+            },
+            {
+              "name": "trocaRemedio",
+              "type": "AMAZON.FirstName",
+              "elicitationRequired": false,
+              "confirmationRequired": false,
+              "prompts": {}
             }
           ]
         }
@@ -390,7 +396,7 @@
         "variations": [
           {
             "type": "PlainText",
-            "value": "Qual medicamento você deseja atualizar?"
+            "value": "Qual medicamento deseja atualizar?"
           }
         ]
       },
@@ -414,5 +420,5 @@
       }
     ]
   },
-  "version": "15"
+  "version": "17"
 }
