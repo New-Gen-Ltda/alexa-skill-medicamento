@@ -10,6 +10,7 @@ import os
 from ask_sdk_s3.adapter import S3Adapter
 s3_adapter = S3Adapter(bucket_name=os.environ["S3_PERSISTENCE_BUCKET"])
 
+
 from ask_sdk_core.skill_builder import CustomSkillBuilder
 from ask_sdk_core.dispatch_components import AbstractRequestHandler
 from ask_sdk_core.dispatch_components import AbstractExceptionHandler
@@ -42,22 +43,79 @@ class LaunchRequestHandler(AbstractRequestHandler):
                 .response
         )
 
-class ListaMedicamentosIntentHandler(AbstractRequestHandler):
+# class ListaMedicamentosIntentHandler(AbstractRequestHandler):
+#     """Handler for Hello World Intent."""
+#     def can_handle(self, handler_input):
+#         # type: (HandlerInput) -> bool
+#         return ask_utils.is_intent_name("AbrirListaMedicamentosIntent")(handler_input)
+
+#     def handle(self, handler_input):
+#         # type: (HandlerInput) -> Response
+#         #slots = handler_input.request_envelope.request.intent.slots
+#         #nomeRemedio = slots["nomeRemedio"].value
+#         speak_output = _("Os medicamentos cadastrados são: {nomeRemedio} ")
+
+#         return (
+#             handler_input.response_builder
+#                 .speak(speak_output)
+#                 # .ask("add a reprompt if you want to keep the session open for the user to respond")
+#                 .response
+#         )
+
+    
+class RemoverMedicamentosIntentHandler(AbstractRequestHandler):
     """Handler for Hello World Intent."""
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
-        return ask_utils.is_intent_name("AbrirListaMedicamentosIntent")(handler_input)
+        return ask_utils.is_intent_name("removerIntent")(handler_input)
 
     def handle(self, handler_input):
-        # type: (HandlerInput) -> Response
-        #slots = handler_input.request_envelope.request.intent.slots
-        #nomeRemedio = slots["nomeRemedio"].value
-        speak_output = _("Os medicamentos cadastrados são: {nomeRemedio} ")
+        slots = handler_input.request_envelope.request.intent.slots
+        nomeRemedio = slots["nomeRemedio"].value
+        
+        attr = handler_input.attributes_manager.persistent_attributes
+        nomeRemedio_2 = attr['nomeRemedio']
+        horarioRemedio_2 = attr['horarioRemedio']
+        descRemedio_2 = attr['descRemedio']
+            
+        # nomeContato = attr['nomecontato']
+        # telefone = attr['telefone']
 
+        attributes_manager = handler_input.attributes_manager
+        lista_1 = nomeRemedio_2
+        lista_2 = horarioRemedio_2
+        lista_3 = descRemedio_2
+        
+        x = -1
+        achou = 0
+        while(x<len(lista_1)):
+            x+=1
+            if(lista_1[x] == nomeRemedio):
+                lista_1.pop(x)
+                lista_2.pop(x)
+                lista_3.pop(x)
+                speak_output = "O medicamento {nomeRemedio} foi removido com sucesso".format(nomeRemedio=nomeRemedio)
+                achou =1
+                remedio_attributes_2 = {
+                    "nomeRemedio": lista_1,
+                    "horarioRemedio": lista_2,
+                    "descRemedio": lista_3,
+                    # "nomeContato": nomeContato,
+                    # "telefone": telefone,
+                }
+                attributes_manager.persistent_attributes = remedio_attributes_2
+                attributes_manager.save_persistent_attributes()
+        
+            
+        if (achou==0):
+            speak_output = "O medicamento {nomeRemedio} não foi encontrado".format(nomeRemedio=nomeRemedio)
+            
+
+        
         return (
             handler_input.response_builder
                 .speak(speak_output)
-                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                # .ask("Remédio não encontrado, tente novamente")
                 .response
         )
     
@@ -78,6 +136,8 @@ class AtualizarMedicamentosIntentHandler(AbstractRequestHandler):
         horarioRemedio_2 = attr['horarioRemedio'] # month is a string, and we need to convert it to a month index later
         descRemedio_2 = attr['descRemedio']
             # speak_output = 'Thanks, I will remember that you were born {month} {day} {year}.'.format(month=month, day=day, year=year)
+        nomeContato = attr['nomecontato']
+        telefone = attr['telefone']
 
         attributes_manager = handler_input.attributes_manager
         lista_1 = nomeRemedio_2
@@ -98,7 +158,9 @@ class AtualizarMedicamentosIntentHandler(AbstractRequestHandler):
         remedio_attributes_2 = {
             "nomeRemedio": lista_1,
             "horarioRemedio": lista_2,
-            "descRemedio": lista_3
+            "descRemedio": lista_3,
+            "nomeContato": nomeContato,
+            "telefone": telefone,
         }
         
         attributes_manager.persistent_attributes = remedio_attributes_2
@@ -115,30 +177,48 @@ class AtualizarMedicamentosIntentHandler(AbstractRequestHandler):
                 # .ask("add a reprompt if you want to keep the session open for the user to respond")
                 .response
         )
-    
-class HasMedicamentoLaunchRequestHandler(AbstractRequestHandler):
-    """Handler for launch after they have set their birthday"""
 
+class InformarMedicamentoIntentHandler(AbstractRequestHandler):
+    """Handler for Hello World Intent."""
     def can_handle(self, handler_input):
-        # extract persistent attributes and check if they are all present
-        attr = handler_input.attributes_manager.persistent_attributes
-        attributes_are_present = ("nomeRemedio" in attr and "horarioRemedio" in attr and "descRemedio" in attr)
-
-        return attributes_are_present and ask_utils.is_request_type("LaunchRequest")(handler_input)
-
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("InformarMedicamentoIntent")(handler_input) 
+        
     def handle(self, handler_input):
+        slots = handler_input.request_envelope.request.intent.slots
+        nome = slots["nomeRemedio"].value
+        
         attr = handler_input.attributes_manager.persistent_attributes
         nomeRemedio = attr['nomeRemedio']
         horarioRemedio = attr['horarioRemedio'] # month is a string, and we need to convert it to a month index later
         descRemedio = attr['descRemedio']
-
-        # TODO:: Use the settings API to get current date and then compute how many days until user's bday
-        # TODO:: Say happy birthday on the user's birthday
-
-        speak_output = "Bem vindo! O medicamento {nomeRemedio} com horário às {horarioRemedio} e descrição {descRemedio} já está cadastrado!".format(nomeRemedio=nomeRemedio, horarioRemedio=horarioRemedio, descRemedio=descRemedio)
-        handler_input.response_builder.speak(speak_output)
-
-        return handler_input.response_builder.response
+        
+        attributes_manager = handler_input.attributes_manager
+        lista_1 = nomeRemedio
+        lista_2 = horarioRemedio
+        lista_3 = descRemedio
+        
+        # order_lista1 = lista_1[:]
+        # order_lista2 = lista_2[:]
+        
+        # order_lista3 = lista_3[:]
+        
+        aux = 0
+        
+        for i in range(len(lista_1)):
+            if lista_1[i] == nome:
+                aux = aux + 1
+                speak_output = "O medicamento {nomeRemedio} possui horário {horarioRemedio} e descrição {descRemedio}".format(nomeRemedio=nome, horarioRemedio=lista_2[i], descRemedio=lista_3[i])
+        
+        if aux == 0:
+            speak_output = "O medicamento {nomeRemedio} não foi encontrado na lista de remédios.".format(nomeRemedio=nome)
+        
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .response
+        )
 
 class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
     """Handler for Hello World Intent."""
@@ -159,18 +239,16 @@ class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
         horarioRemedio_2 = attr['horarioRemedio'] # month is a string, and we need to convert it to a month index later
         descRemedio_2 = attr['descRemedio']
             # speak_output = 'Thanks, I will remember that you were born {month} {day} {year}.'.format(month=month, day=day, year=year)
+        nomeContato = attr['nomecontato']
+        telefone = attr['telefone']
 
         attributes_manager = handler_input.attributes_manager
 
-        remedio_attributes = {
-            "nomeRemedio": nomeRemedio,
-            "horarioRemedio": horarioRemedio,
-            "descRemedio": descRemedio
-        }
         
         lista_1 = nomeRemedio_2
         lista_2 = horarioRemedio_2
         lista_3 = descRemedio_2
+        
         
         lista_1.append(nomeRemedio) 
         lista_2.append(horarioRemedio)
@@ -179,7 +257,9 @@ class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
         remedio_attributes_2 = {
             "nomeRemedio": lista_1,
             "horarioRemedio": lista_2,
-            "descRemedio": lista_3
+            "descRemedio": lista_3,
+            "nomeContato": nomeContato,
+            "telefone": telefone,
         }
         
         attributes_manager.persistent_attributes = remedio_attributes_2
@@ -188,6 +268,97 @@ class CadastrarMedicamentoIntentHandler(AbstractRequestHandler):
         speak_output = "O medicamento {nomeRemedio} com horário às {horarioRemedio} e descrição {descRemedio} foi cadastrado com sucesso!".format(nomeRemedio=nomeRemedio, horarioRemedio=horarioRemedio, descRemedio=descRemedio)
 
 
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .response
+        )
+
+class ContatoEmergenciaIntentHandler(AbstractRequestHandler):
+    """Handler for Contato Emergencia Intent."""
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("ContatoEmergenciaIntent")(handler_input) 
+
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        slots = handler_input.request_envelope.request.intent.slots
+        nomeContato = slots["nomeContato"].value
+        telefone = slots["telefone"].value
+        
+        
+        attr = handler_input.attributes_manager.persistent_attributes
+        nomeRemedio_2 = attr['nomeRemedio']
+        horarioRemedio_2 = attr['horarioRemedio'] # month is a string, and we need to convert it to a month index later
+        descRemedio_2 = attr['descRemedio']
+        
+
+        attributes_manager = handler_input.attributes_manager
+
+        
+        lista_1 = nomeRemedio_2
+        lista_2 = horarioRemedio_2
+        lista_3 = descRemedio_2
+        
+        remedio_attributes_2 = {
+            "nomeRemedio": lista_1,
+            "horarioRemedio": lista_2,
+            "descRemedio": lista_3,
+            "nomeContato": nomeContato,
+            "telefone": telefone,
+        }
+        
+        attributes_manager.persistent_attributes = remedio_attributes_2
+        attributes_manager.save_persistent_attributes()
+        
+        speak_output = 'O contato de emergência {nomeContato} com o telefone {telefone} foi cadastrado com sucesso!'.format(nomeContato=nomeContato, telefone=telefone)
+
+        return (
+            handler_input.response_builder
+                .speak(speak_output)
+                # .ask("add a reprompt if you want to keep the session open for the user to respond")
+                .response
+        )
+
+class ProgramacaoMedicamentoIntentHandler(AbstractRequestHandler):
+    """Handler for Hello World Intent."""
+
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return ask_utils.is_intent_name("ProgramacaoMedicamentoIntent")(handler_input) 
+    
+    def handle(self, handler_input):
+        attr = handler_input.attributes_manager.persistent_attributes
+        nomeRemedio = attr['nomeRemedio']
+        horarioRemedio = attr['horarioRemedio'] # month is a string, and we need to convert it to a month index later
+        descRemedio = attr['descRemedio']
+        
+        attributes_manager = handler_input.attributes_manager
+        lista_1 = nomeRemedio
+        lista_2 = horarioRemedio
+        lista_3 = descRemedio
+        
+        order_lista1 = lista_1[:]
+        order_lista2 = lista_2[:]
+        
+        order_lista3 = lista_3[:]
+        for i in range(len(order_lista2)):
+            for j in range(i + 1, len(order_lista2)):
+                if order_lista2[i] > order_lista2[j]:
+                    order_lista2[i], order_lista2[j] = order_lista2[j], order_lista2[i]
+                    order_lista1[i], order_lista1[j] = order_lista1[j], order_lista1[i]
+                    # order_lista3[i], order_lista3[j] = order_lista3[j], order_lista3[i]
+                    
+        speak_output = ""
+        
+        for i in range(len(order_lista2)):
+            if (i == 0):
+                speak_output += "A programação de hoje é o remédio {nome} às {horario}".format(nome=order_lista1[i], horario=order_lista2[i])
+            else:
+                speak_output += ", {nome} às {horario}".format(nome=order_lista1[i], horario=order_lista2[i])
+            
         return (
             handler_input.response_builder
                 .speak(speak_output)
@@ -305,20 +476,23 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 # defined are included below. The order matters - they're processed top to bottom.
 
 
-#sb = SkillBuilder()
+
 sb = CustomSkillBuilder(persistence_adapter=s3_adapter)
 
-#sb.add_request_handler(HasMedicamentoLaunchRequestHandler())
+
 sb.add_request_handler(LaunchRequestHandler())
-# sb.add_request_handler(HelloWorldIntentHandler())
 sb.add_request_handler(CadastrarMedicamentoIntentHandler())
-sb.add_request_handler(ListaMedicamentosIntentHandler())
+sb.add_request_handler(ContatoEmergenciaIntentHandler())
+# sb.add_request_handler(ListaMedicamentosIntentHandler())
 sb.add_request_handler(AtualizarMedicamentosIntentHandler())
+sb.add_request_handler(InformarMedicamentoIntentHandler())
+sb.add_request_handler(ProgramacaoMedicamentoIntentHandler())
+sb.add_request_handler(RemoverMedicamentosIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
 sb.add_request_handler(SessionEndedRequestHandler())
-sb.add_request_handler(IntentReflectorHandler()) # make sure IntentReflectorHandler is last so it doesn't override your custom intent handlers
+sb.add_request_handler(IntentReflectorHandler())
 
 sb.add_exception_handler(CatchAllExceptionHandler())
 
